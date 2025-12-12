@@ -2,6 +2,36 @@
 
 A Python tool to parse, analyze, and decode Pronto Hex infrared remote signals, with utilities to visualize, "meanify", and convert the timings into binary and hex representations. Suitable for IR protocol analysis, debugging, or reverse engineering remote controls.
 
+"Meanify" takes the Pronto timing values (which are pulse widths, measured in microseconds) and bins the pulses into a histogram. It then takes the mean values which are within some percent of each other, and normalizes the pulses. This is necessary because if you are sampling 1000 pulses from an IR transmitter and capturing it on a receiver, the pulses will vary due to natural clock deviation of the receiver and transmitter. 
+
+For example this code will read several messages from the provided input (test_log_files/mode_change_logs_espir.txt) and generate the following histogram:
+
+```text
+Timing Value Histogram:
+------------------------------
+     289 us:      1 
+     316 us:   1786 
+     342 us:      3 
+     500 us:     18 
+     526 us:   2242 
+    1078 us:    435 
+    1105 us:     15 
+    1578 us:     15 
+    1604 us:      5 
+    3130 us:     10 
+    3156 us:      1 
+    3183 us:      9 
+   10126 us:     20 
+
+Reduced histogram: 7 unique values
+[302, 342, 513, 1091, 1591, 3156, 10126]
+```
+
+Analyzing the histogram, you see pulses such as: 316 and 342 microseconds. These are about the same and should both represent the same value when we analyze the messages.
+
+So this code reduces the histogram to the 7 values that are statistically unique, and normalizes (or "meanifies") the messages before further conversion. 
+
+
 "Pronto" hex log file should come from an ESPHOME device setup as an IR Receiver, for example here is a working esphome YAML config. This is using a small "ESP-01M" board.
 ```yaml
 esphome:
@@ -132,10 +162,9 @@ Message 0:   1 0 1 0 1 0 ...  Length: 32
 
 ## License
 
-MIT License
+see LICENSE file
 
 ---
 
 ## Acknowledgements
 
-This tool leverages [Colorama](https://pypi.org/project/colorama/) for colored terminal output. Pronto Hex format specification is well documented by various IR hobbyist communities.
